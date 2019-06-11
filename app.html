@@ -1,0 +1,218 @@
+<!doctype html>
+<html lang="es">
+<head>
+<!-- Required meta tags -->
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+<!-- Bootstrap CSS -->
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+
+<!-- Firebase App is always required and must be first -->
+<script src="https://www.gstatic.com/firebasejs/5.9.1/firebase-app.js"></script>
+
+<!-- Add additional services that you want to use -->
+<script src="https://www.gstatic.com/firebasejs/5.9.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/5.9.1/firebase-database.js"></script>
+<script src="https://www.gstatic.com/firebasejs/5.9.1/firebase-firestore.js"></script>
+<script src="https://www.gstatic.com/firebasejs/5.9.1/firebase-messaging.js"></script>
+<script src="https://www.gstatic.com/firebasejs/5.9.1/firebase-functions.js"></script>
+
+<!-- Comment out (or don't include) services that you don't want to use -->
+<!-- <script src="https://www.gstatic.com/firebasejs/5.9.1/firebase-storage.js"></script> -->
+
+
+<link href="https://kendo.cdn.telerik.com/2014.2.716/styles/kendo.common.min.css" rel="stylesheet" />
+<link href="https://kendo.cdn.telerik.com/2014.2.716/styles/kendo.default.min.css" rel="stylesheet" />
+<script src="https://kendo.cdn.telerik.com/2014.2.716/js/jquery.min.js"></script>
+<script src="https://kendo.cdn.telerik.com/2014.2.716/js/kendo.ui.core.min.js"></script>
+
+
+<title></title>
+</head>
+<body>
+	
+	<div class="container" id="app"></div>
+
+    
+	<script id="index" type="text/x-kendo-template">		
+		<h1>Home Page</h1>		
+        <a class="btn btn-primary" href="#" data-bind="click: clickListadoNuevos">Nuevos</a>		
+		<a class="btn btn-primary" href="#" data-bind="click: clickListadoUsados">Usados</a>		
+    </script>
+	
+	
+	<script id="listado" type="text/x-kendo-template" data-bind="">		
+		<h1>Listado</h1>		
+       
+		<ul id="dataListado"></ul>
+    </script>
+	
+
+	
+	
+	<script id="detalle" type="text/x-kendo-template">
+		<h1>Detalle</h1>		
+		
+		<div id="dataDetalle"></div>
+		<a href="#" data-bind="click: clickHome">ir a Home</a>
+    </script>
+
+</body>
+
+<script>
+  // Your web app's Firebase configuration
+  var firebaseConfig = {
+    apiKey: "AIzaSyDUPMsAOudjC11gpKmSV7VwSLVaCHsXFh8",
+    authDomain: "codigo-tips.firebaseapp.com",
+    databaseURL: "https://codigo-tips.firebaseio.com",
+    projectId: "codigo-tips",
+    storageBucket: "codigo-tips.appspot.com",
+    messagingSenderId: "560181031904",
+    appId: "1:560181031904:web:1a568092ef847ba0"
+  };
+  // Initialize Firebase
+  firebase.initializeApp(firebaseConfig);
+
+
+	// Models.	
+	var viewModel = kendo.observable({
+
+	  init: function() {
+		console.log("view init");			
+	  },
+
+	  show: function() {
+		console.log("view show");		
+	  },
+
+	  clickListadoNuevos: function(e) {
+		router.navigate("/listado/nuevos");
+		e.preventDefault();
+	  },
+	  
+	  clickListadoUsados: function(e) {
+		router.navigate("/listado/usados");
+		e.preventDefault();
+	  }
+	});
+	
+	var listingViewModel = kendo.observable({		
+		tipo: "",
+		listado: function(array)
+		{
+			var html = "";			
+			array.forEach(function(row,index){				
+				html += '<li>';			
+				html += '<div>'+row.marca+'</a></div>';			
+				html += '<div>'+row.nombre+'</a></div>';							
+				html += '<div>'+row.precio+'</a></div>';			
+				html += '<div><a href="#/detalle/'+listingViewModel.tipo+'/'+row.id+'">ver más</a></div>';			
+				html += '<hr />';			
+				html += '</li>';			
+			});
+			
+			return html;
+			
+		},
+		init: function(){	
+			console.log("dataFirebase Init");
+		},
+		show: function(){		
+			console.log("dataFirebase Show");
+			
+			document.getElementById("dataListado").innerHTML = 'Cargando...';
+			
+			var tipo = listingViewModel.tipo;
+			
+			var listado = firebase.database().ref('data/listado/'+tipo);
+			var array = [];						
+			listado.on('value',function(data){			
+				
+				data.forEach(function(row){		
+					array.push(row.val());						
+				})
+				
+				console.log(array);
+				document.getElementById("dataListado").innerHTML  = listingViewModel.listado(array);
+				
+			});		
+		}	
+	});
+	
+	var productViewModel = kendo.observable({
+		
+		idProduct: "",
+		detalle: function(row)
+		{
+				var html = "";			
+				html += '<div>';			
+				html += '<div>'+row.marca+'</a></div>';			
+				html += '<div>'+row.nombre+'</a></div>';							
+				html += '<div>'+row.motor+'</a></div>';						
+				html += '<div>'+row.radio+'</a></div>';			
+				html += '<div>'+row.precio+'</a></div>';
+				html += '</div>';
+			
+			return html;
+			
+		},
+		init: function(){	
+			console.log("dataFirebase Init");
+		
+					
+		},
+		show: function(){		
+			console.log("dataFirebase Show");
+			
+			var idProduct = productViewModel.idProduct;
+			console.log(idProduct)
+			var listado = firebase.database().ref('data/listado/'+idProduct);
+			var array = [];						
+			listado.on('value',function(data){	
+
+				console.log(data.val());
+								
+				document.getElementById("dataDetalle").innerHTML  = productViewModel.detalle(data.val());
+				
+			});		
+		}
+	
+	});
+	
+
+	// Views, layouts.
+	var layout = new kendo.Layout("<header>Header</header><section id='content'></section><footer>Footer</footer>");
+
+	var index = new kendo.View("index", { model: viewModel, init: viewModel.init.bind(viewModel), show: viewModel.show.bind(viewModel) });
+	var listado = new kendo.View("listado", { model: listingViewModel, init: listingViewModel.init.bind(listingViewModel), show: listingViewModel.show.bind(listingViewModel) });
+	var detalle = new kendo.View("detalle", { model: productViewModel, init: productViewModel.init.bind(productViewModel), show: productViewModel.show.bind(productViewModel) });
+
+
+	// Routing.
+	var router = new kendo.Router();
+
+	router.bind("init", function() {
+		layout.render($("#app"));
+	});
+
+	router.route("/", function() {
+		layout.showIn("#content", index);
+	});
+
+	router.route("/listado/:id", function(id) {
+		listingViewModel.tipo = id;
+		layout.showIn("#content", listado);			
+	});
+	
+	 router.route("/detalle/:tipo/:id", function(tipo,id) {
+		productViewModel.idProduct = tipo+"/"+id;
+		layout.showIn("#content", detalle);
+	});
+
+	$(function() {
+		router.start();
+	});
+
+</script>
+</html>
